@@ -4,18 +4,24 @@
 //              display module.
 // Author: Robert Trost 
 // Date: 2024-01-11
-//
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Edited: Mikhail Rego
+// Date: 2025-01-26
+// Description: completed code, where at the bottom it says "ADD CODE HERE". 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Edited: Mikhail Rego
 // Date: 2025-01-27
-// Description: completed code, where at the bottom it says "ADD CODE HERE"
-
+// Description: Added bcd to ensure that dial only displays numeric values. 
+// 	Future work: ensire each turn increments only by 1, not 4.
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 module lab2 ( input logic CLOCK_50,       // 50 MHz clock
               (* altera_attribute = "-name WEAK_PULL_UP_RESISTOR ON" *) 
               input logic enc1_a, enc1_b, //Encoder 1 pins
-				      (* altera_attribute = "-name WEAK_PULL_UP_RESISTOR ON" *) input logic 
-              enc2_a, enc2_b,				      //Encoder 2 pins
+				      (* altera_attribute = "-name WEAK_PULL_UP_RESISTOR ON" *) 
+				  input logic enc2_a, enc2_b,				      //Encoder 2 pins
               output logic [7:0] leds,    // 7-seg LED enables
-              output logic [3:0] ct ) ;   // digit cathodes
+              output logic [3:0] ct    // digit cathodes
+) ;
 
    logic [1:0] digit;  // select digit to display
    logic [3:0] disp_digit;  // current digit of count to display
@@ -23,6 +29,8 @@ module lab2 ( input logic CLOCK_50,       // 50 MHz clock
 
    logic [7:0] enc1_count, enc2_count; // count used to track encoder movement and to display
    logic enc1_cw, enc1_ccw, enc2_cw, enc2_ccw;  // encoder module outputs
+	
+	logic [7:0] bcd1_count, bcd2_count; // will be used for binary-to-decimal output
 
    // instantiate modules to implement design
    decode2 decode2_0 (.digit,.ct) ;
@@ -30,6 +38,9 @@ module lab2 ( input logic CLOCK_50,       // 50 MHz clock
 
    encoder encoder_1 (.clk(CLOCK_50), .a(enc1_a), .b(enc1_b), .cw(enc1_cw), .ccw(enc1_ccw));
    encoder encoder_2 (.clk(CLOCK_50), .a(enc2_a), .b(enc2_b), .cw(enc2_cw), .ccw(enc2_ccw));
+	
+	enc2bcd bdc_1 ( .clk(CLOCK_50), .enc_count(enc1_count), .bcd_count(bcd1_count) );
+	enc2bcd bdc_2 ( .clk(CLOCK_50), .enc_count(enc2_count), .bcd_count(bcd2_count) );
 
   // encoder counts: enc1_count & enc2_count (increment when cw=1, decrement when ccw=1)
   always_ff @(posedge CLOCK_50)  begin
@@ -57,15 +68,13 @@ module lab2 ( input logic CLOCK_50,       // 50 MHz clock
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////
   /**** ADD CODE HERE *****/
     case (digit)
-      2'b00: disp_digit = enc2_count[3:0];  // Display the lower nibble of Encoder 2 count
-      2'b01: disp_digit = enc2_count[7:4];  // Display the upper nibble of Encoder 2 count
-      2'b10: disp_digit = enc1_count[3:0];  // Display the lower nibble of Encoder 1 count
-      2'b11: disp_digit = enc1_count[7:4];  // Display the upper nibble of Encoder 1 count
+      2'b00: disp_digit = bcd2_count[3:0];  // Display the lower nibble of Encoder 2 count
+      2'b01: disp_digit = bcd2_count[7:4];  // Display the upper nibble of Encoder 2 count
+      2'b10: disp_digit = bcd1_count[3:0];  // Display the lower nibble of Encoder 1 count
+      2'b11: disp_digit = bcd1_count[7:4];  // Display the upper nibble of Encoder 1 count
       default: disp_digit = 4'b0000;        // Default case (shouldn't occur)
     endcase
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////
   end
 
 endmodule
-
-
